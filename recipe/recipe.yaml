@@ -2,7 +2,7 @@ schema_version: 1
 
 context:
   name: ada-py
-  version: "0.133.0"
+  version: "0.134.0"
   python_min: "3.11"
 
 recipe:
@@ -11,7 +11,7 @@ recipe:
 
 source:
   url: https://github.com/Krande/adapy/archive/v${{ version }}.tar.gz
-  sha256: 703ed86f82056ffa1b42908d35ea32fa1fd257ef7d8ef3f461b58e03322ecb68
+  sha256: 62bc981cc6648e85c4ffab89f486df27aaf0fc217d0e861ba6eca62b205e3db4
 
 build:
   number: 0
@@ -161,6 +161,12 @@ outputs:
       skip: not win
       script:
         file: build-desktop
+      dynamic_linking:
+        # A Windows API set DLL (WebView2 / WinRT error reporting): part of the OS,
+        # never a conda package. rattler-build's own system list doesn't cover it,
+        # and error_overlinking would otherwise fail the build on it.
+        missing_dso_allowlist:
+          - "**/api-ms-win-core-winrt-*.dll"
     requirements:
       build:
         - ${{ compiler('rust') }}
@@ -172,8 +178,12 @@ outputs:
         # `ada desktop` (in ada-py) and this binary are released together.
         - ada-py ==${{ version }}
     tests:
-      - script:
-          - ada-desktop --version
+      # A contents check, not `ada-desktop --version`: a script test installs the run
+      # dependencies, and ada-py at this exact version is built by the linux job of
+      # the same run, so it is not on the channel yet when this job tests.
+      - package_contents:
+          bin:
+            - ada-desktop
     about:
       summary: Desktop window for Ada Studio, launched with `ada desktop`
       description: |

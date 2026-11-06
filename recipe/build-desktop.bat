@@ -13,6 +13,11 @@ if errorlevel 1 exit 1
 cargo build --release --locked
 if errorlevel 1 exit 1
 
+:: conda-forge's rust activation sets CARGO_BUILD_TARGET, which puts the output
+:: under target\<triple>\release rather than target\release.
+set "OUT=target\release"
+if defined CARGO_BUILD_TARGET set "OUT=target\%CARGO_BUILD_TARGET%\release"
+
 if not exist "%LIBRARY_BIN%" mkdir "%LIBRARY_BIN%"
-copy /Y target\release\ada-desktop.exe "%LIBRARY_BIN%\ada-desktop.exe"
+copy /Y "%OUT%\ada-desktop.exe" "%LIBRARY_BIN%\ada-desktop.exe"
 if errorlevel 1 exit 1
